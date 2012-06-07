@@ -1,0 +1,66 @@
+#!/bin/sh
+
+#PIDFile=/var/run/${0##*/}.pid
+#ConfigFile=/etc/scrubbR.conf
+
+PIDFile=${0##*/}.pid
+ConfigFile=scrubbR.conf
+
+###############################################################################
+
+# initialize 'daemon mode'
+if [ "x$1" != "xdaemon" ]; then
+  $0 daemon 1> /dev/null 2> /dev/null &
+  exit 0
+fi
+
+# reads the config file
+f_read_config() {
+  if [ "$1" == -v ]; then
+    echo 'reloaded config file'
+  fi
+  . $ConfigFile
+}
+
+# gets state of mdX
+# returns:
+# 0  :  idle
+# 1  :  paused
+# 2  :  running
+# 99 :  unsupported/error
+f_syncstate() {
+  local $syspath=/sys/block/$1/md
+  local sync_speed=`$CAT $syspath/sync_speed`
+  local sync_min=`$CAT $syspath/sync_min`
+  local sync_action=`$CAT $syspath/sync_action`
+  
+  if [ $sync_speed = 'none' ] && [ $sync_action = 'repair' ]; then
+      return 2
+  elif [ $sync_action = 'idle' ]; then
+    if [ $sync_min -gt 0 ]; then
+      return 1
+    else
+      return 0
+    fi
+  else
+    return 99
+  fi
+}
+
+f_read_config
+# On SIGHUP, re-read config
+trap 'read_config -v' HUP
+
+if [ ! -e $PIDFile ]; then
+   trap "rm -f $PIDFile; exit" INT TERM EXIT
+   echo $$ > $PIDFile
+   while true; do
+     touch $TEST
+     sleep 10
+   done
+   rm $PIDile
+   trap - INT TERM EXIT
+else
+   echo "already running"
+   exit
+fi
