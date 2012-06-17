@@ -17,7 +17,7 @@ fi
 # reads the config file
 f_read_config() {
   if [ "$1" == -v ]; then
-    echo 'reloaded config file'
+    $ECHO 'reloaded config file'
   fi
   . $ConfigFile
 }
@@ -49,18 +49,43 @@ f_syncstate() {
 
 f_read_config
 # On SIGHUP, re-read config
-trap 'read_config -v' HUP
+# commented out till fully supported
+#trap 'read_config -v' HUP
 
 if [ ! -e $PIDFile ]; then
-   trap "rm -f $PIDFile; exit" INT TERM EXIT
-   echo $$ > $PIDFile
-   while true; do
-     touch $TEST
-     sleep 10
-   done
-   rm $PIDile
-   trap - INT TERM EXIT
+  trap "$RM -f $PIDFile; exit" INT TERM EXIT
+  $ECHO $$ > $PIDFile
+  while true; do
+    
+    ##########################################################################
+    
+    dow_now=`$DATE +%w`
+    hour_now=`$DATE +%k`
+    
+    # are we're scheduled for today?
+    if [ ${rundow[$dow_now]} -eq 1 ]; then
+      if [ ${runhour[$hour_now]} -eq 1 ]; then
+        
+      else
+        # sleep till next hour
+        local next_hour=`date -d '+1 hour' +'%D %H:00:00'`
+        $SLEEP $((`date -d "$next_hour" +%s` - `date +%s`))
+      fi
+    else
+      # sleep till next day
+      local next_midnight=`date -d 'tomorrow' +'%D 00:00:00'`
+      $SLEEP $((`date -d "$next_midnight" +%s` - `date +%s`))
+    fi
+    
+    # sleep a extra sec to avoid loop on second 0 - just some paranoia
+    $SLEEP 1
+    
+    ##########################################################################
+    
+  done
+  $RM $PIDile
+  trap - INT TERM EXIT
 else
-   echo "already running"
-   exit
+  $ECHO "already running"
+  exit
 fi

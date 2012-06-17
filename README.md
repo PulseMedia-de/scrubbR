@@ -1,12 +1,10 @@
-scrubbR
-=======
+# scrubbR
 
 scrubbR provides an daemon-like shell script to maintain/scrubb md-RAIDs on Linux systems.
 
-*This is currently not in a functional state!*
+**This is currently not in a functional state!**
 
-License
--------
+## License
 
 This program is free software: You can redistribute it and/or modify it under
 the terms of the three clause BSD-License.
